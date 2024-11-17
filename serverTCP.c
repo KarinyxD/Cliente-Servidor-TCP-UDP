@@ -5,6 +5,7 @@
 #include <sys/types.h> 
 #include <sys/socket.h>
 #include <netinet/in.h>
+#include <fcntl.h>
 
 char *ROOT="arquivos"; // diretorio dos arquivos
 
@@ -61,7 +62,10 @@ int main(int argc, char *argv[])
 
 
 		// Abre o arquivo que será enviado
-    	filefd = open(ROOT "/" filename, O_RDONLY);
+		char path[1024];
+		sprintf(path, "%s/%s", ROOT, filename);
+		filefd = open(path, O_RDONLY);
+
     	if (filefd < 0) {
 			perror("Erro ao abrir o arquivo");
 			close(newsockfd);
