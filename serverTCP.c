@@ -6,6 +6,7 @@
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <fcntl.h>
+#include <openssl/sha.h>
 
 char *ROOT="arquivos"; // diretorio dos arquivos
 
@@ -14,7 +15,6 @@ void error(const char *msg)
     perror(msg);
     exit(1);
 }
-
 
 int main(int argc, char *argv[])
 {
@@ -27,6 +27,9 @@ int main(int argc, char *argv[])
 		int filefd; 
 		ssize_t bytes_read;
 		int n;
+		unsigned char hash[SHA256_DIGEST_LENGTH];
+		SHA256_CTX sha256_ctx;
+		SHA256_Init(&sha256_ctx);
 
 		if (argc < 2) { // verifica se a porta foi passada como argumento
 				fprintf(stderr,"ERROR, no port provided\n");
@@ -60,7 +63,6 @@ int main(int argc, char *argv[])
 
 		printf("Conexão estabelecida com o cliente. Enviando o arquivo...\n");	
 
-
 		// Abre o arquivo que será enviado
 		char path[1024];
 		sprintf(path, "%s/%s", ROOT, filename);
@@ -73,32 +75,23 @@ int main(int argc, char *argv[])
 			exit(1);
     	}
     // Envia o arquivo em blocos de 1024 bytes
-    while ((bytes_read = read(filefd, buffer, sizeof(buffer))) > 0) {
-        n = write(newsockfd, buffer, bytes_read);
-        if (n < 0) error("ERROR writing to socket");
-    }
+	while ((bytes_read = read(filefd, buffer, sizeof(buffer))) > 0) {
+		SHA256_Update(&sha256_ctx, buffer, bytes_read); // Atualiza o hash com os dados lidos
+		n = write(newsockfd, buffer, bytes_read);        // Envia o bloco para o cliente
+		if (n < 0) error("ERROR writing to socket");
+	}
 
-    if (bytes_read < 0) error("ERROR reading from file");
+	SHA256_Final(hash, &sha256_ctx);  // Finaliza o cálculo do hash
 
-    printf("Arquivo enviado com sucesso.\n");
+	// Enviar o hash para o cliente
+	n = write(newsockfd, hash, SHA256_DIGEST_LENGTH);
+	if (n < 0) error("ERROR sending hash to client");
+
+	printf("Arquivo e hash enviados com sucesso.\n");
 
     close(filefd);
     close(newsockfd);
     close(sockfd);
     return 0;    
-	
-	// Envia o arquivo em blocos de 1024 bytes
-    while ((bytes_read = read(filefd, buffer, sizeof(buffer))) > 0) {
-        n = write(newsockfd, buffer, bytes_read);
-        if (n < 0) error("ERROR writing to socket");
-    }
 
-    if (bytes_read < 0) error("ERROR reading from file");
-
-    printf("Arquivo enviado com sucesso.\n");
-
-    close(filefd);
-    close(newsockfd);
-    close(sockfd);
-    return 0;
 }

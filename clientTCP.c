@@ -5,6 +5,7 @@
 #include <sys/socket.h>
 #include <unistd.h>
 #include <time.h>
+#include <openssl/sha.h>
 
 #define PORT 12345 // Porta do servidor
 #define BUFFER_SIZE 1024  // Tamanho do buffer para receber os dados
@@ -22,6 +23,8 @@ int main(int argc, char **argv) {
     size_t total_bytes_received = 0; // Total de bytes recebidos
     clock_t start_time, end_time; // medir os tempos de inicio e fim da transferencia(taxa de download)
     double time_taken; // Tempo total de download em segundos
+    unsigned char expected_hash[SHA256_DIGEST_LENGTH];
+    unsigned char received_hash[SHA256_DIGEST_LENGTH];
 
     // Criando o socket TCP
     if ((client_sock = socket(AF_INET, SOCK_STREAM, 0)) == -1) {
@@ -46,11 +49,28 @@ int main(int argc, char **argv) {
         perror("write() error");
         exit(1);
     }
+    
+    // Receber o hash do servidor
+    int n = read(client_sock, received_hash, SHA256_DIGEST_LENGTH);
+    if (n < 0) {
+        perror("ERROR reading hash from server");
+        exit(1);
+    }
 
     // Iniciando a medição do tempo de download
     start_time = clock();
 
-    // Recebe os dados do servidor em blocos
+    // Recebe os dados do servidor em blocos e calcula o hash do conteúdo recebido
+    size_t bytes_received;
+    SHA256_CTX sha256_ctx;
+    SHA256_Init(&sha256_ctx);
+
+    while ((bytes_received = read(client_sock, buffer, BUFFER_SIZE)) > 0) {
+        total_bytes_received += bytes_received;
+        SHA256_Update(&sha256_ctx, buffer, bytes_received); // Atualiza o hash com os dados recebidos
+    }
+
+    SHA256_Final(expected_hash, &sha256_ctx);  // Finaliza o cálculo do hash    // Recebe os dados do servidor em blocos
     size_t bytes_received;
     while ((bytes_received = read(client_sock, buffer, BUFFER_SIZE)) > 0) {
         total_bytes_received += bytes_received;
