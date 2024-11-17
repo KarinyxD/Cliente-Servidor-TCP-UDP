@@ -23,7 +23,7 @@ int main(int argc, char *argv[])
 		socklen_t clilen; // tamanho da estrutura do endereço do cliente
 		struct sockaddr_in serv_addr, cli_addr; // endereços IP do servidor e do cliente
 		char buffer[1024]; // Buffer de dados para enviar e receber
-		char *filename = "file_to_send.txt"; // Nome do arquivo a ser enviado
+		char *filename = "arquivo_binario_10mb.bin"; // Nome do arquivo a ser enviado
 		int filefd; 
 		ssize_t bytes_read;
 		int n;

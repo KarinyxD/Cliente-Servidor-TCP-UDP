@@ -6,7 +6,7 @@
 #include <unistd.h>
 #include <time.h>
 
-#define PORT 8080  // Porta do servidor
+#define PORT 12345 // Porta do servidor
 #define BUFFER_SIZE 1024  // Tamanho do buffer para receber os dados
 
 int main(int argc, char **argv) {
