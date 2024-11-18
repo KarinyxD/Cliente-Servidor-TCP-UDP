@@ -8,7 +8,7 @@
 #include <fcntl.h>
 #include <openssl/evp.h>
 
-char *ROOT="arquivos"; // diretorio dos arquivos
+char *ROOT="arquivos_servidor"; // diretorio dos arquivos
 
 void error(const char *msg)
 {

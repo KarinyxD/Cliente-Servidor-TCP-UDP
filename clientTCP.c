@@ -6,14 +6,14 @@
 #include <unistd.h>
 #include <openssl/evp.h>
 #include <time.h>
+#include <fcntl.h>
 
-//#define PORT 12348 // Porta do servidor
 #define BUFFER_SIZE 1024  // Tamanho do buffer para receber os dados
 
 int main(int argc, char **argv) {
-    // Verificando se o IP do servidor foi passado como argumento
+    // Verificando se o IP do servidor e a porta foram passados como argumentos
     if (argc != 3) {
-        fprintf(stderr, "Use: %s <IP do servidor> <Porta> \n", argv[0]);
+        fprintf(stderr, "Use: %s <IP do servidor> <porta>\n", argv[0]);
         exit(1);
     }
 
@@ -50,18 +50,29 @@ int main(int argc, char **argv) {
         exit(1);
     }
 
+    // Abrindo o arquivo para escrita no diretório arquivos_cliente
+    char filepath[1024];
+    snprintf(filepath, sizeof(filepath), "arquivos_cliente/arquivo_recebido");
+    int filefd = open(filepath, O_WRONLY | O_CREAT | O_TRUNC, 0644);
+    if (filefd < 0) {
+        perror("Erro ao abrir o arquivo para escrita");
+        close(client_sock);
+        exit(1);
+    }
 
-
-    // Recebe os dados do servidor em blocos e imprime no terminal
+    // Recebe os dados do servidor em blocos e escreve no arquivo
     EVP_MD_CTX *mdctx = EVP_MD_CTX_new();
     if (mdctx == NULL) {
         perror("Erro ao criar contexto MD5");
+        close(filefd);
         close(client_sock);
         exit(1);
     }
 
     if (EVP_DigestInit_ex(mdctx, EVP_md5(), NULL) != 1) {
         perror("Erro ao inicializar MD5");
+        EVP_MD_CTX_free(mdctx);
+        close(filefd);
         close(client_sock);
         exit(1);
     }
@@ -72,9 +83,17 @@ int main(int argc, char **argv) {
     ssize_t bytes_received;
     while ((bytes_received = read(client_sock, buffer, BUFFER_SIZE)) > 0) {
         total_bytes_received += bytes_received;
-        //fwrite(buffer, 1, bytes_received, stdout);
+        if (write(filefd, buffer, bytes_received) != bytes_received) {
+            perror("Erro ao escrever no arquivo");
+            EVP_MD_CTX_free(mdctx);
+            close(filefd);
+            close(client_sock);
+            exit(1);
+        }
         if (EVP_DigestUpdate(mdctx, buffer, bytes_received) != 1) {
             perror("Erro ao atualizar MD5");
+            EVP_MD_CTX_free(mdctx);
+            close(filefd);
             close(client_sock);
             exit(1);
         }
@@ -83,6 +102,14 @@ int main(int argc, char **argv) {
     // Finalizando a medição do tempo de download
     end_time = clock();
     time_taken = ((double)(end_time - start_time)) / CLOCKS_PER_SEC;
+
+    if (bytes_received < 0) {
+        perror("Erro ao ler dados do servidor");
+        EVP_MD_CTX_free(mdctx);
+        close(filefd);
+        close(client_sock);
+        exit(1);
+    }
 
     // Calculando a taxa de download (bytes por segundo)
     double download_rate = total_bytes_received / time_taken;
@@ -94,6 +121,8 @@ int main(int argc, char **argv) {
     unsigned int md_len;
     if (EVP_DigestFinal_ex(mdctx, client_md5, &md_len) != 1) {
         perror("Erro ao finalizar MD5");
+        EVP_MD_CTX_free(mdctx);
+        close(filefd);
         close(client_sock);
         exit(1);
     }
@@ -107,7 +136,8 @@ int main(int argc, char **argv) {
         printf("Falha na verificação da integridade dos dados!\n");
     }
 
-    // Fechando o socket
+    // Fechando o arquivo e o socket
+    close(filefd);
     close(client_sock);
 
     return 0;
