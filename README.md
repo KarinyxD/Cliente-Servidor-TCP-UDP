@@ -34,5 +34,5 @@ make
 - **Cliente:**
   - Para executar o cliente, use o seguinte comando:
 ```sh
-./clientTCP <IP do servidor>
+./clientTCP <IP do servidor> <porta>
 ```

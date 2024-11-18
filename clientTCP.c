@@ -7,13 +7,13 @@
 #include <openssl/evp.h>
 #include <time.h>
 
-#define PORT 12348 // Porta do servidor
+//#define PORT 12348 // Porta do servidor
 #define BUFFER_SIZE 1024  // Tamanho do buffer para receber os dados
 
 int main(int argc, char **argv) {
     // Verificando se o IP do servidor foi passado como argumento
-    if (argc != 2) {
-        fprintf(stderr, "Use: %s <IP do servidor>\n", argv[0]);
+    if (argc != 3) {
+        fprintf(stderr, "Use: %s <IP do servidor> <Porta> \n", argv[0]);
         exit(1);
     }
 
@@ -33,7 +33,7 @@ int main(int argc, char **argv) {
     memset(&serveraddr, 0, sizeof(serveraddr)); // Zerando a estrutura serveraddr
     serveraddr.sin_family = AF_INET; // IPV4
     inet_pton(AF_INET, argv[1], &serveraddr.sin_addr.s_addr); // converte o IP do servidor para binario
-    serveraddr.sin_port = htons(PORT); // porta do servidor na ordem de bytes correta
+    serveraddr.sin_port = htons(atoi(argv[2])); // porta do servidor na ordem de bytes correta
 
     // Conectando ao servidor
     if (connect(client_sock, (struct sockaddr *)&serveraddr, sizeof(serveraddr)) == -1) {
@@ -72,7 +72,7 @@ int main(int argc, char **argv) {
     ssize_t bytes_received;
     while ((bytes_received = read(client_sock, buffer, BUFFER_SIZE)) > 0) {
         total_bytes_received += bytes_received;
-        fwrite(buffer, 1, bytes_received, stdout);
+        //fwrite(buffer, 1, bytes_received, stdout);
         if (EVP_DigestUpdate(mdctx, buffer, bytes_received) != 1) {
             perror("Erro ao atualizar MD5");
             close(client_sock);
