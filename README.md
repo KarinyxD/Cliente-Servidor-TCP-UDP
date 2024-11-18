@@ -36,3 +36,4 @@ make
 ```sh
 ./clientTCP <IP do servidor> <porta>
 ```
+No nosso caso, o ip do servidor local pode ser: '127.0.0.1' ou 'localhost'
