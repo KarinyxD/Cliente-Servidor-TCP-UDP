@@ -7,7 +7,7 @@
 #include <openssl/evp.h>
 #include <time.h>
 
-#define PORT 14253  // Porta do servidor
+#define PORT 12347 // Porta do servidor
 #define BUFFER_SIZE 1024  // Tamanho do buffer para receber os dados
 
 int main(int argc, char **argv) {

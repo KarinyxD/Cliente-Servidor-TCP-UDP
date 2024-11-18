@@ -1,27 +1,20 @@
-# Nome dos executáveis
-SERVER_EXEC = serverTCP
-CLIENT_EXEC = clientTCP
-
-# Nome dos arquivos fonte
-SERVER_SRC = serverTCP.c
-CLIENT_SRC = clientTCP.c
-
 # Compilador e flags
 CC = gcc
-CFLAGS = -Wall -Wextra -lssl -lcrypto
+CFLAGS = -Wall -Wextra 
+BFLAGS = -lssl -lcrypto
 
 # Regras de compilação
-all: $(SERVER_EXEC) $(CLIENT_EXEC)
+all: serverTCP clientTCP
 
-$(SERVER_EXEC): $(SERVER_SRC)
-    $(CC) $(CFLAGS) -o $@ $^
+serverTCP: serverTCP.c
+	$(CC) $(CFLAGS) -o serverTCP serverTCP.c $(BFLAGS)
 
-$(CLIENT_EXEC): $(CLIENT_SRC)
-    $(CC) $(CFLAGS) -o $@ $^
+clientTCP: clientTCP.c
+	$(CC) $(CFLAGS) -o clientTCP clientTCP.c $(BFLAGS)
 
 # Limpeza dos arquivos compilados
 clean:
-    rm -f $(SERVER_EXEC) $(CLIENT_EXEC)
+	rm -f serverTCP clientTCP
 
 # Limpeza completa, incluindo arquivos objeto
 distclean: clean

@@ -16,6 +16,7 @@ void error(const char *msg)
     exit(0);
 }
 
+//funcao para calcular o hash MD5 de um arquivo
 void calculate_md5(const char *filename, unsigned char *result) {
     int filefd = open(filename, O_RDONLY);
     if (filefd < 0) {
@@ -55,7 +56,6 @@ void calculate_md5(const char *filename, unsigned char *result) {
 
 int main(int argc, char *argv[])
 {
-    char line[2047]; // Buffer de dados recebidos do cliente
     int sockfd, newsockfd, portno; // socket servidor, socket cliente(especifico), porta
     socklen_t clilen; // tamanho da estrutura do endereço do cliente
     struct sockaddr_in serv_addr, cli_addr; // endereços IP do servidor e do cliente
