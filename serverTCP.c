@@ -67,6 +67,7 @@ int main(int argc, char *argv[])
 
     if (argc < 2) { // verifica se a porta foi passada como argumento
         fprintf(stderr,"ERROR, no port provided\n");
+        fprintf(stderr, "Use: %s <PORT>\n", argv[0]);
         exit(0);
     }
 

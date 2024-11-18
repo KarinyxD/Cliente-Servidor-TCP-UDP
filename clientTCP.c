@@ -7,7 +7,7 @@
 #include <openssl/evp.h>
 #include <time.h>
 
-#define PORT 12347 // Porta do servidor
+#define PORT 12348 // Porta do servidor
 #define BUFFER_SIZE 1024  // Tamanho do buffer para receber os dados
 
 int main(int argc, char **argv) {
@@ -72,7 +72,7 @@ int main(int argc, char **argv) {
     ssize_t bytes_received;
     while ((bytes_received = read(client_sock, buffer, BUFFER_SIZE)) > 0) {
         total_bytes_received += bytes_received;
-        //fwrite(buffer, 1, bytes_received, stdout);
+        fwrite(buffer, 1, bytes_received, stdout);
         if (EVP_DigestUpdate(mdctx, buffer, bytes_received) != 1) {
             perror("Erro ao atualizar MD5");
             close(client_sock);
