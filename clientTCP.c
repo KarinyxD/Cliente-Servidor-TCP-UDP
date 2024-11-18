@@ -6,7 +6,7 @@
 #include <unistd.h>
 #include <time.h>
 
-#define PORT 12348  // Porta do servidor
+#define PORT 14253  // Porta do servidor
 #define BUFFER_SIZE 1024  // Tamanho do buffer para receber os dados
 
 int main(int argc, char **argv) {
@@ -37,6 +37,7 @@ int main(int argc, char **argv) {
     // Conectando ao servidor
     if (connect(client_sock, (struct sockaddr *)&serveraddr, sizeof(serveraddr)) == -1) {
         perror("connect() error");
+        close(client_sock);
         exit(1);
     }
 
@@ -44,16 +45,18 @@ int main(int argc, char **argv) {
     char request[] = "SEND_FILE";
     if (write(client_sock, request, strlen(request)) == -1) {
         perror("write() error");
+        close(client_sock);
         exit(1);
     }
 
     // Iniciando a medição do tempo de download
     start_time = clock();
 
-    // Recebe os dados do servidor em blocos
-    size_t bytes_received;
+    // Recebe os dados do servidor em blocos e imprime no terminal
+    ssize_t bytes_received;
     while ((bytes_received = read(client_sock, buffer, BUFFER_SIZE)) > 0) {
         total_bytes_received += bytes_received;
+        fwrite(buffer, 1, bytes_received, stdout);
     }
 
     // Finalizando a medição do tempo de download
@@ -62,8 +65,8 @@ int main(int argc, char **argv) {
 
     // Calculando a taxa de download (bytes por segundo)
     double download_rate = total_bytes_received / time_taken;
-    printf("Arquivo recebido com sucesso!\n");
-    printf("Taxa de download: %.2f megabytes por segundo\n", (download_rate/(1024*1024)));
+    printf("\nArquivo recebido com sucesso!\n");
+    printf("Taxa de download: %.2f bytes por segundo\n", download_rate);
 
     // Fechando o socket
     close(client_sock);
