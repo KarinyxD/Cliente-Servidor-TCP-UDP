@@ -4,6 +4,7 @@
 #include <string.h>
 #include <sys/socket.h>
 #include <unistd.h>
+#include <openssl/evp.h>
 #include <time.h>
 
 #define PORT 14253  // Porta do servidor
@@ -41,10 +42,26 @@ int main(int argc, char **argv) {
         exit(1);
     }
 
-    // Enviando a solicitação do arquivo para o servidor
-    char request[] = "SEND_FILE";
-    if (write(client_sock, request, strlen(request)) == -1) {
-        perror("write() error");
+    // Recebendo o hash MD5 do servidor
+    unsigned char server_md5[EVP_MAX_MD_SIZE];
+    if (read(client_sock, server_md5, EVP_MD_size(EVP_md5())) != EVP_MD_size(EVP_md5())) {
+        perror("Erro ao receber o hash MD5 do servidor");
+        close(client_sock);
+        exit(1);
+    }
+
+
+
+    // Recebe os dados do servidor em blocos e imprime no terminal
+    EVP_MD_CTX *mdctx = EVP_MD_CTX_new();
+    if (mdctx == NULL) {
+        perror("Erro ao criar contexto MD5");
+        close(client_sock);
+        exit(1);
+    }
+
+    if (EVP_DigestInit_ex(mdctx, EVP_md5(), NULL) != 1) {
+        perror("Erro ao inicializar MD5");
         close(client_sock);
         exit(1);
     }
@@ -52,11 +69,15 @@ int main(int argc, char **argv) {
     // Iniciando a medição do tempo de download
     start_time = clock();
 
-    // Recebe os dados do servidor em blocos e imprime no terminal
     ssize_t bytes_received;
     while ((bytes_received = read(client_sock, buffer, BUFFER_SIZE)) > 0) {
         total_bytes_received += bytes_received;
-        fwrite(buffer, 1, bytes_received, stdout);
+        //fwrite(buffer, 1, bytes_received, stdout);
+        if (EVP_DigestUpdate(mdctx, buffer, bytes_received) != 1) {
+            perror("Erro ao atualizar MD5");
+            close(client_sock);
+            exit(1);
+        }
     }
 
     // Finalizando a medição do tempo de download
@@ -67,6 +88,24 @@ int main(int argc, char **argv) {
     double download_rate = total_bytes_received / time_taken;
     printf("\nArquivo recebido com sucesso!\n");
     printf("Taxa de download: %.2f bytes por segundo\n", download_rate);
+
+    // Calculando o hash MD5 do arquivo recebido
+    unsigned char client_md5[EVP_MAX_MD_SIZE];
+    unsigned int md_len;
+    if (EVP_DigestFinal_ex(mdctx, client_md5, &md_len) != 1) {
+        perror("Erro ao finalizar MD5");
+        close(client_sock);
+        exit(1);
+    }
+
+    EVP_MD_CTX_free(mdctx);
+
+    // Verificando a integridade dos dados
+    if (memcmp(server_md5, client_md5, EVP_MD_size(EVP_md5())) == 0) {
+        printf("Integridade dos dados verificada com sucesso!\n");
+    } else {
+        printf("Falha na verificação da integridade dos dados!\n");
+    }
 
     // Fechando o socket
     close(client_sock);
