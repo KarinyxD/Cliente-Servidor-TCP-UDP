@@ -1,3 +1,4 @@
-# Ignorar arquivos de compilação em C
+# Ignorar arquivos binários
 *.o
+*.out
 *.exe
