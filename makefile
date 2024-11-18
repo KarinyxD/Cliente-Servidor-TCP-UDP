@@ -1,19 +1,29 @@
-# Define the object files
-#objects = main.o graph.o entry.o binary-heap.o
+# Nome dos executáveis
+SERVER_EXEC = serverTCP
+CLIENT_EXEC = clientTCP
 
-# The default target prog
-# is the name of the executable file
-#prog: $(objects)
-#	gcc $(objects) -o prog
+# Nome dos arquivos fonte
+SERVER_SRC = serverTCP.c
+CLIENT_SRC = clientTCP.c
 
-# Individual dependencies
-#main.o: main.c graph.h entry.h binary-heap.h
-#	gcc -c main.c
-#graph.o: graph.c graph.h binary-heap.h
-#	gcc -c graph.c
-#entry.o: entry.c entry.h
-#	gcc -c entry.c
+# Compilador e flags
+CC = gcc
+CFLAGS = -Wall -Wextra -lssl -lcrypto
 
-# Clean up
-#clean:
-#	rm -rf *.o prog
+# Regras de compilação
+all: $(SERVER_EXEC) $(CLIENT_EXEC)
+
+$(SERVER_EXEC): $(SERVER_SRC)
+    $(CC) $(CFLAGS) -o $@ $^
+
+$(CLIENT_EXEC): $(CLIENT_SRC)
+    $(CC) $(CFLAGS) -o $@ $^
+
+# Limpeza dos arquivos compilados
+clean:
+    rm -f $(SERVER_EXEC) $(CLIENT_EXEC)
+
+# Limpeza completa, incluindo arquivos objeto
+distclean: clean
+
+.PHONY: all clean distclean
