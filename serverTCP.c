@@ -10,33 +10,32 @@
 
 char *ROOT="arquivos_servidor"; // diretorio dos arquivos
 
-void error(const char *msg)
-{
+void error(const char *msg){
     perror(msg);
     exit(0);
 }
 
-//funcao para calcular o hash MD5 de um arquivo
+//funcao para calcular o hash MD5 do arquivo
 void calculate_md5(const char *filename, unsigned char *result) {
     int filefd = open(filename, O_RDONLY);
     if (filefd < 0) {
         perror("Erro ao abrir o arquivo para calcular MD5");
         exit(1);
     }
-
+    // Estrutura para hash MD5
     EVP_MD_CTX *mdctx = EVP_MD_CTX_new();
     if (mdctx == NULL) {
         perror("Erro ao criar contexto MD5");
         exit(1);
     }
-
     if (EVP_DigestInit_ex(mdctx, EVP_md5(), NULL) != 1) {
         perror("Erro ao inicializar MD5");
         exit(1);
     }
 
+    // calculo do hash MD5 (em blocos) do arquivo a ser enviado
     char buffer[1024];
-    ssize_t bytes_read;
+    ssize_t bytes_read; // quantidade de bytes lidos
     while ((bytes_read = read(filefd, buffer, sizeof(buffer))) > 0) {
         if (EVP_DigestUpdate(mdctx, buffer, bytes_read) != 1) {
             perror("Erro ao atualizar MD5");
@@ -44,22 +43,22 @@ void calculate_md5(const char *filename, unsigned char *result) {
         }
     }
 
-    unsigned int md_len;
-    if (EVP_DigestFinal_ex(mdctx, result, &md_len) != 1) {
+    unsigned int md_len; //tamanho do hash
+    // finaliza calculo
+    if (EVP_DigestFinal_ex(mdctx, result, &md_len) != 1){
+    //result armazena o resultado do calculo do hash MD5
         perror("Erro ao finalizar MD5");
         exit(1);
     }
-
     EVP_MD_CTX_free(mdctx);
     close(filefd);
 }
 
-int main(int argc, char *argv[])
-{
+int main(int argc, char *argv[]){   
     int sockfd, newsockfd, portno; // socket servidor, socket cliente(especifico), porta
-    socklen_t clilen; // tamanho da estrutura do endereço do cliente
-    struct sockaddr_in serv_addr, cli_addr; // endereços IP do servidor e do cliente
-    char buffer[1023]; // Buffer de dados para enviar e receber
+    socklen_t clilen; // tam da estrutura do cliente
+    struct sockaddr_in serv_addr, cli_addr; // endereço IP e porta do servidor e do cliente
+    char buffer[1023];
     char *filename = "arquivo_binario_10mb.bin"; // Nome do arquivo a ser enviado
     int filefd; 
     ssize_t bytes_read;
@@ -78,9 +77,9 @@ int main(int argc, char *argv[])
 
     memset(&serv_addr, 0, sizeof(serv_addr)); // Zerando a estrutura serv_addr
     portno = atoi(argv[1]);
-    serv_addr.sin_family = AF_INET;
+    serv_addr.sin_family = AF_INET; //IPv4
     serv_addr.sin_addr.s_addr = INADDR_ANY;
-    serv_addr.sin_port = htons(portno);
+    serv_addr.sin_port = htons(portno); // converte o nº da porta
 
     // Associa o socket à porta e endereço especificados
     if (bind(sockfd, (struct sockaddr *) &serv_addr, sizeof(serv_addr)) < 0) 

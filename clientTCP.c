@@ -18,10 +18,10 @@ int main(int argc, char **argv) {
     }
 
     struct sockaddr_in serveraddr; // Estrutura para armazenar o endereço do servidor
-    int client_sock; // Identificador do socket do cliente
-    char buffer[BUFFER_SIZE]; // Buffer dos dados recebidos
-    size_t total_bytes_received = 0; // Total de bytes recebidos
-    clock_t start_time, end_time; // medir os tempos de inicio e fim da transferencia(taxa de download)
+    int client_sock; 
+    char buffer[BUFFER_SIZE]; 
+    size_t total_bytes_received = 0; 
+    struct timespec start_time, end_time; 
     double time_taken; // Tempo total de download em segundos
 
     // Criando o socket TCP
@@ -33,7 +33,7 @@ int main(int argc, char **argv) {
     memset(&serveraddr, 0, sizeof(serveraddr)); // Zerando a estrutura serveraddr
     serveraddr.sin_family = AF_INET; // IPV4
     inet_pton(AF_INET, argv[1], &serveraddr.sin_addr.s_addr); // converte o IP do servidor para binario
-    serveraddr.sin_port = htons(atoi(argv[2])); // porta do servidor na ordem de bytes correta
+    serveraddr.sin_port = htons(atoi(argv[2]));
 
     // Conectando ao servidor
     if (connect(client_sock, (struct sockaddr *)&serveraddr, sizeof(serveraddr)) == -1) {
@@ -53,14 +53,14 @@ int main(int argc, char **argv) {
     // Abrindo o arquivo para escrita no diretório arquivos_cliente
     char filepath[1024];
     snprintf(filepath, sizeof(filepath), "arquivos_cliente/arquivo_recebido");
-    int filefd = open(filepath, O_WRONLY | O_CREAT | O_TRUNC, 0644);
+    int filefd = open(filepath, O_WRONLY | O_CREAT | O_TRUNC, 0777);
     if (filefd < 0) {
         perror("Erro ao abrir o arquivo para escrita");
         close(client_sock);
         exit(1);
     }
 
-    // Recebe os dados do servidor em blocos e escreve no arquivo
+    // Início da função para calcular o hash MD5 do arquivo recebido
     EVP_MD_CTX *mdctx = EVP_MD_CTX_new();
     if (mdctx == NULL) {
         perror("Erro ao criar contexto MD5");
@@ -78,11 +78,19 @@ int main(int argc, char **argv) {
     }
 
     // Iniciando a medição do tempo de download
-    start_time = clock();
+    clock_gettime(CLOCK_MONOTONIC, &start_time);
 
     ssize_t bytes_received;
     while ((bytes_received = read(client_sock, buffer, BUFFER_SIZE)) > 0) {
+        // Medindo o tempo de recepção dos bytes
+        struct timespec temp_start, temp_end;
+        clock_gettime(CLOCK_MONOTONIC, &temp_start);
+
         total_bytes_received += bytes_received;
+
+        clock_gettime(CLOCK_MONOTONIC, &temp_end);
+        time_taken += (temp_end.tv_sec - temp_start.tv_sec) + (temp_end.tv_nsec - temp_start.tv_nsec) / 1e9;
+
         if (write(filefd, buffer, bytes_received) != bytes_received) {
             perror("Erro ao escrever no arquivo");
             EVP_MD_CTX_free(mdctx);
@@ -100,8 +108,7 @@ int main(int argc, char **argv) {
     }
 
     // Finalizando a medição do tempo de download
-    end_time = clock();
-    time_taken = ((double)(end_time - start_time)) / CLOCKS_PER_SEC;
+    clock_gettime(CLOCK_MONOTONIC, &end_time);
 
     if (bytes_received < 0) {
         perror("Erro ao ler dados do servidor");
