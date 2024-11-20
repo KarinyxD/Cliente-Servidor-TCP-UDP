@@ -3,6 +3,8 @@
 *.out
 *.exe
 clientTCP
+clientUDP
+serverUDP
 serverTCP
 servidor
 client
