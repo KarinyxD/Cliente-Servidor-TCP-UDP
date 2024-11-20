@@ -17,6 +17,10 @@ Este projeto implementa um modelo de comunicação cliente-servidor utilizando o
 - **TCP**: Comunicação confiável entre cliente e servidor.
 - **UDP**: Comunicação não confiável, mas rápida entre cliente e servidor.
 
+## Notas Finais
+Cada protocolo (TCP e UDP) possui características diferentes. O TCP garante a entrega ordenada dos pacotes, enquanto o UDP é mais rápido, mas não garante a entrega ou ordem dos pacotes. Escolha o protocolo que melhor atende às necessidades do seu projeto.
+Se precisar de mais informações ou ajuda, não hesite em abrir uma issue ou pull request.
+
 ## Contribuição
 1. Faça um fork do repositório.
 2. Crie uma branch para sua feature (`git checkout -b feature/nova-feature`).
