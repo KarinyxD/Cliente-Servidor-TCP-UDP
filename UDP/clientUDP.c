@@ -8,7 +8,7 @@
 #include <arpa/inet.h>
 #include <fcntl.h>
 #include <time.h>
-
+#define TIMEOUT_SEC 5 // Definindo o tempo limite de 5 segundos
 void error(const char *msg) {
     perror(msg);
     exit(1);
@@ -29,6 +29,7 @@ int main(int argc, char *argv[]) {
     double time_taken = 0;
     size_t expected_packets = 0;
     size_t packets_received = 0;
+    struct timespec start_time, end_time;
 
     // Cria o socket UDP
     client_sock = socket(AF_INET, SOCK_DGRAM, 0);
@@ -68,46 +69,78 @@ int main(int argc, char *argv[]) {
     expected_packets = strtoul(buffer, NULL, 10);  // Converte a string recebida para número de pacotes
     printf("Número de pacotes esperados: %zu\n", expected_packets);
 
+    // Inicializa o fd_set e timeout para o select
+    fd_set readfds;
+    struct timeval timeout;
+
     // Recebe os dados do servidor em blocos
-    size_t total_bytes_received = 0;
-    struct timespec start_time, end_time;
     printf("Recebendo arquivo...\n");
+    size_t total_bytes_received = 0;
     while (1) {
-        clock_gettime(CLOCK_MONOTONIC, &start_time);
-        n = recvfrom(client_sock, buffer, sizeof(buffer), 0, (struct sockaddr *)&serveraddr, &addr_len);
-        clock_gettime(CLOCK_MONOTONIC, &end_time);
-        time_taken += (end_time.tv_sec - start_time.tv_sec) + (end_time.tv_nsec - start_time.tv_nsec) / 1e9;
 
-        total_bytes_received += n;
-        if (n < 0) {
-            perror("Erro ao receber dados do servidor");
+        // Preenche o fd_set
+        FD_ZERO(&readfds);
+        FD_SET(client_sock, &readfds);
+
+        // Define o tempo limite de 5 segundos
+        timeout.tv_sec = TIMEOUT_SEC;
+        timeout.tv_usec = 0;
+
+        // Espera até que o socket esteja pronto para leitura ou o timeout seja alcançado
+        int ret = select(client_sock + 1, &readfds, NULL, NULL, &timeout);
+
+        if (ret == -1) {
+            perror("Erro ao usar select");
             close(filefd);
             close(client_sock);
             exit(1);
-        }
-
-        // Verifica se a mensagem é "EOF"(se chegou ao final)
-        if (strncmp(buffer, "EOF", n) == 0) {
-            printf("Fim da transmissão.\n");
+        } else if (ret == 0) {
+            // Timeout ocorreu
+            printf("Timeout: Nenhum dado recebido em %d segundos.\n", TIMEOUT_SEC);
             break;
-        }
+        } else {
+            // Dados disponíveis para leitura
+            if (FD_ISSET(client_sock, &readfds)) {
+                clock_gettime(CLOCK_MONOTONIC, &start_time);
+                n = recvfrom(client_sock, buffer, sizeof(buffer), 0, (struct sockaddr *)&serveraddr, &addr_len);
+                clock_gettime(CLOCK_MONOTONIC, &end_time);
+                time_taken += (end_time.tv_sec - start_time.tv_sec) + (end_time.tv_nsec - start_time.tv_nsec) / 1e9;
 
-        // Grava os dados no arquivo
-        if (write(filefd, buffer, n) < 0) {
-            perror("Erro ao gravar no arquivo");
-            close(filefd);
-            close(client_sock);
-            exit(1);
+                if (n < 0) {
+                    perror("Erro ao receber dados do servidor");
+                    close(filefd);
+                    close(client_sock);
+                    exit(1);
+                }
+
+                total_bytes_received += n;
+
+                // Verifica se a mensagem é "EOF"(se chegou ao final)
+                if (strncmp(buffer, "EOF", n) == 0) {
+                    printf("Fim da transmissão.\n");
+                    break;
+                }
+
+                // Grava os dados no arquivo
+                if (write(filefd, buffer, n) < 0) {
+                    perror("Erro ao gravar no arquivo");
+                    close(filefd);
+                    close(client_sock);
+                    exit(1);
+                }
+                packets_received++; // Incrementa a quantidade de pacotes recebidos
+            }
         }
-        packets_received++; // Incrementa a quantidade de pacotes recebidos
     }
+
     printf("Numero de pacotes recebidos: %zu\n", packets_received);
+    printf("Porcetagem de perda de pacotes: %.2f%%\n", (1 - (double)packets_received / expected_packets) * 100);
     // printf("time: %f\n", time_taken);
     // printf("total_bytes_received: %ld\n", total_bytes_received);
     // Calculando a taxa de download (megabytes por segundo)
     double download_rate = (total_bytes_received / (1024*1024)) / time_taken;
-    printf("Arquivo recebido e salvo como 'arquivo_recebidoUDP.bin'.\n");
     printf("Taxa de download: %.2f MB/s\n", download_rate);
+    printf("Arquivo recebido e salvo como 'arquivos_cliente/arquivo_recebidoUDP.bin'.\n");
 
     close(filefd);
     close(client_sock);

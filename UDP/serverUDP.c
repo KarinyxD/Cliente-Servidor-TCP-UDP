@@ -78,7 +78,6 @@ int main(int argc, char *argv[]){
     if (n < 0) {
         error("Erro ao enviar número de pacotes ao cliente");
     }
-    printf("Número de pacotes esperados (%zu) enviado ao cliente.\n", num_packets);
 
     // Envia o arquivo em blocos de 1023 bytes
     while ((bytes_read = read(filefd, buffer, sizeof(buffer))) > 0) {
