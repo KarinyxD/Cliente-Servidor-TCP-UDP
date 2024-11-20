@@ -24,6 +24,7 @@ int main(int argc, char *argv[]){
     int filefd; 
     ssize_t bytes_read;
     int n;
+    size_t packets_sent = 0; // quantidade de pacotes enviados
 
     if (argc < 2) { // verifica se a porta foi passada como argumento
         fprintf(stderr,"ERROR, no port provided\n");
@@ -64,6 +65,21 @@ int main(int argc, char *argv[]){
         exit(0);
     }
 
+    long file_size = lseek(filefd, 0, SEEK_END); // Tamanho do arquivo
+    lseek(filefd, 0, SEEK_SET); // Volta o ponteiro para o início do arquivo
+
+    // numero de pacotes que serao enviados
+    size_t packet_size = sizeof(buffer);
+    size_t num_packets = (file_size + packet_size - 1) / packet_size; //arredonda para cima
+    
+    // Envia o número de pacotes para o cliente
+    sprintf(buffer, "%zu", num_packets);
+    n = sendto(sockfd, buffer, strlen(buffer), 0, (struct sockaddr *)&cli_addr, clilen);
+    if (n < 0) {
+        error("Erro ao enviar número de pacotes ao cliente");
+    }
+    printf("Número de pacotes esperados (%zu) enviado ao cliente.\n", num_packets);
+
     // Envia o arquivo em blocos de 1023 bytes
     while ((bytes_read = read(filefd, buffer, sizeof(buffer))) > 0) {
         n = sendto(sockfd, buffer, bytes_read, 0, (struct sockaddr *) &cli_addr, clilen);
@@ -73,6 +89,7 @@ int main(int argc, char *argv[]){
             close(sockfd);
             exit(1);
         }
+        packets_sent++; // incrementa a quantidade de pacotes enviados
     }
 
     // Envia a mensagem "EOF" para indicar o término
@@ -87,6 +104,7 @@ int main(int argc, char *argv[]){
     }
 
     printf("Arquivo enviado com sucesso.\n");
+    printf("Quantidade de pacotes enviados: %zu\n", packets_sent);
 
     close(filefd);
     close(sockfd);

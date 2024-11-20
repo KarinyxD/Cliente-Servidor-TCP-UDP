@@ -27,6 +27,8 @@ int main(int argc, char *argv[]) {
     char buffer[1023];
     ssize_t n;
     double time_taken = 0;
+    size_t expected_packets = 0;
+    size_t packets_received = 0;
 
     // Cria o socket UDP
     client_sock = socket(AF_INET, SOCK_DGRAM, 0);
@@ -56,6 +58,15 @@ int main(int argc, char *argv[]) {
         close(client_sock);
         exit(1);
     }
+
+    // Recebe o número de pacotes esperados do servidor
+    n = recvfrom(client_sock, buffer, sizeof(buffer), 0, (struct sockaddr *)&serveraddr, &addr_len);
+    if (n < 0) {
+        error("Erro ao receber número de pacotes");
+    }
+    buffer[n] = '\0';  // Garantir que a string de pacotes tenha um terminador
+    expected_packets = strtoul(buffer, NULL, 10);  // Converte a string recebida para número de pacotes
+    printf("Número de pacotes esperados: %zu\n", expected_packets);
 
     // Recebe os dados do servidor em blocos
     size_t total_bytes_received = 0;
@@ -88,7 +99,9 @@ int main(int argc, char *argv[]) {
             close(client_sock);
             exit(1);
         }
+        packets_received++; // Incrementa a quantidade de pacotes recebidos
     }
+    printf("Numero de pacotes recebidos: %zu\n", packets_received);
     // printf("time: %f\n", time_taken);
     // printf("total_bytes_received: %ld\n", total_bytes_received);
     // Calculando a taxa de download (megabytes por segundo)
