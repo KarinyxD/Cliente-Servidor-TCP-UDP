@@ -4,17 +4,17 @@ CFLAGS = -Wall -Wextra
 BFLAGS = -lssl -lcrypto
 
 # Regras de compilação
-all: serverTCP clientTCP
+all: serverUDP clientUDP
 
-serverTCP: serverTCP.c
-	$(CC) $(CFLAGS) -o serverTCP serverTCP.c $(BFLAGS)
+serverUDP: serverUDP.c
+	$(CC) $(CFLAGS) -o serverUDP serverUDP.c $(BFLAGS)
 
-clientTCP: clientTCP.c
-	$(CC) $(CFLAGS) -o clientTCP clientTCP.c $(BFLAGS)
+clientUDP: clientUDP.c
+	$(CC) $(CFLAGS) -o clientUDP clientUDP.c $(BFLAGS)
 
 # Limpeza dos arquivos compilados
 clean:
-	rm -f serverTCP clientTCP
+	rm -f serverUDP clientUDP
 
 # Limpeza completa, incluindo arquivos objeto
 distclean: clean
