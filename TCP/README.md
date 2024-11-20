@@ -15,7 +15,7 @@ Este projeto implementa um sistema de cliente-servidor TCP em C, onde o servidor
 - **Cliente:**
   - Conecta-se ao servidor.
   - Recebe o arquivo e o hash MD5 do servidor.
-  - Calcula o hash MD5 do arquivo recebido.
+  - Calcula o hash MD5 do arquivo recebido e a taxa de download.
   - Verifica a integridade dos dados comparando os hashes MD5.
 
 ## Compilação
