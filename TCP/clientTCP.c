@@ -102,7 +102,7 @@ int main(int argc, char **argv) {
 
     // Abrindo o arquivo para escrita no diretório arquivos_cliente
     char filepath[1024];
-    snprintf(filepath, sizeof(filepath), "../arquivos_cliente/arquivo_recebido");
+    snprintf(filepath, sizeof(filepath), "../arquivos_cliente/arquivo_recebidoTCP.bin");
     int filefd = open(filepath, O_WRONLY | O_CREAT | O_TRUNC, 0644);
     if (filefd < 0) {
         perror("Erro ao abrir o arquivo para escrita");
