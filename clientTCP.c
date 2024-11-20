@@ -69,11 +69,10 @@ int main(int argc, char **argv) {
     }
 
     struct sockaddr_in serveraddr; // Estrutura para armazenar o endereço do servidor
-    int client_sock; 
-    char buffer[BUFFER_SIZE]; 
-    size_t total_bytes_received = 0; 
-    struct timespec start_time, end_time; 
-    double time_taken; // Tempo total de download em segundos
+    int client_sock; // Identificador do socket do cliente
+    char buffer[BUFFER_SIZE]; // Buffer dos dados recebidos
+    size_t total_bytes_received = 0; // Total de bytes recebidos
+    double time_taken = 0; // Tempo total de download em segundos
 
     // Criando o socket TCP
     if ((client_sock = socket(AF_INET, SOCK_STREAM, 0)) == -1) {
@@ -84,7 +83,7 @@ int main(int argc, char **argv) {
     memset(&serveraddr, 0, sizeof(serveraddr)); // Zerando a estrutura serveraddr
     serveraddr.sin_family = AF_INET; // IPV4
     inet_pton(AF_INET, argv[1], &serveraddr.sin_addr.s_addr); // converte o IP do servidor para binario
-    serveraddr.sin_port = htons(atoi(argv[2]));
+    serveraddr.sin_port = htons(atoi(argv[2])); // porta do servidor na ordem de bytes correta
 
     // Conectando ao servidor
     if (connect(client_sock, (struct sockaddr *)&serveraddr, sizeof(serveraddr)) == -1) {
@@ -95,7 +94,7 @@ int main(int argc, char **argv) {
 
     // Recebendo o hash MD5 do servidor
     unsigned char server_md5[EVP_MAX_MD_SIZE];
-    if (read(client_sock, server_md5, EVP_MD_size(EVP_md5())) != EVP_MD_size(EVP_md5())) {
+    if (recv(client_sock, server_md5, EVP_MD_size(EVP_md5()), 0) != EVP_MD_size(EVP_md5())) {
         perror("Erro ao receber o hash MD5 do servidor");
         close(client_sock);
         exit(1);
@@ -113,15 +112,15 @@ int main(int argc, char **argv) {
 
     // Recebe os dados do servidor em blocos e escreve no arquivo
     ssize_t bytes_received;
-    while ((bytes_received = read(client_sock, buffer, BUFFER_SIZE)) > 0) {
+    struct timespec start_time, end_time;
+    while (bytes_received > 0) {
         // Medindo o tempo de recepção dos bytes
         clock_gettime(CLOCK_MONOTONIC, &start_time);
-
-        total_bytes_received += bytes_received;
-
+        bytes_received = recv(client_sock, buffer, BUFFER_SIZE, 0);
         clock_gettime(CLOCK_MONOTONIC, &end_time);
         time_taken += (end_time.tv_sec - start_time.tv_sec) + (end_time.tv_nsec - start_time.tv_nsec) / 1e9;
-
+        
+        total_bytes_received += bytes_received;
         if (write(filefd, buffer, bytes_received) != bytes_received) {
             perror("Erro ao escrever no arquivo");
             close(filefd);
@@ -136,11 +135,12 @@ int main(int argc, char **argv) {
         close(client_sock);
         exit(1);
     }
-
-    // Calculando a taxa de download (bytes por segundo)
-    double download_rate = total_bytes_received / time_taken;
+    // printf("time: %f\n", time_taken);
+    // printf("total_bytes_received: %ld\n", total_bytes_received);
+    // Calculando a taxa de download (megabytes por segundo)
+    double download_rate = (total_bytes_received / (1024*1024)) / time_taken;
     printf("\nArquivo recebido com sucesso!\n");
-    printf("Taxa de download: %.2f bytes por segundo\n", download_rate);
+    printf("Taxa de download: %.2f MB/s\n", download_rate);
 
     // Calculando o hash MD5 do arquivo recebido
     unsigned char client_md5[EVP_MAX_MD_SIZE];
