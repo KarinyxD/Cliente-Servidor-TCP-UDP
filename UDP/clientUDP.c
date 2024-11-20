@@ -14,38 +14,34 @@ void error(const char *msg) {
 }
 
 int main(int argc, char *argv[]) {
-    int client_sock, portno;
-    struct sockaddr_in serv_addr;
+    // Verifica se o IP e a porta foram passados como argumentos
+    if (argc != 3) { 
+        fprintf(stderr, "Uso: %s <IP do servidor> <PORTA>\n", argv[0]);
+        exit(1);
+    }
+    
+    int client_sock;
+    struct sockaddr_in serveraddr;
     socklen_t addr_len;
     char buffer[1023];
     ssize_t n;
 
-    if (argc < 3) { // Verifica se o IP e a porta foram passados como argumentos
-        fprintf(stderr, "Uso: %s <IP do servidor> <PORTA>\n", argv[0]);
-        exit(1);
-    }
-
-    // Obtém o número da porta
-    portno = atoi(argv[2]);
 
     // Cria o socket UDP
     client_sock = socket(AF_INET, SOCK_DGRAM, 0);
     if (client_sock < 0)
         error("Erro ao abrir o socket");
 
-    memset(&serv_addr, 0, sizeof(serv_addr));
-    serv_addr.sin_family = AF_INET;
-    serv_addr.sin_port = htons(portno);
+    memset(&serveraddr, 0, sizeof(serveraddr)); // Zerando a estrutura serveraddr
+    serveraddr.sin_family = AF_INET; // IPv4
+    inet_pton(AF_INET, argv[1], &serveraddr.sin_addr.s_addr); // converte o IP do servidor para binario
+    serveraddr.sin_port = htons(atoi(argv[2])); // porta do servidor na ordem de bytes correta
 
-    // Converte o endereço IP do servidor
-    if (inet_pton(AF_INET, argv[1], &serv_addr.sin_addr) <= 0)
-        error("Erro no endereço IP do servidor");
-
-    addr_len = sizeof(serv_addr);
+    addr_len = sizeof(serveraddr);
 
     // Envia uma solicitação ao servidor
     const char *request = "Solicitação de arquivo";
-    n = sendto(client_sock, request, strlen(request), 0, (struct sockaddr *)&serv_addr, addr_len);
+    n = sendto(client_sock, request, strlen(request), 0, (struct sockaddr *)&serveraddr, addr_len);
     if (n < 0)
         error("Erro ao enviar solicitação");
 
@@ -64,7 +60,7 @@ int main(int argc, char *argv[]) {
     // Recebe os dados do servidor em blocos
     printf("Recebendo arquivo...\n");
     while (1) {
-        n = recvfrom(client_sock, buffer, sizeof(buffer), 0, (struct sockaddr *)&serv_addr, &addr_len);
+        n = recvfrom(client_sock, buffer, sizeof(buffer), 0, (struct sockaddr *)&serveraddr, &addr_len);
         if (n < 0) {
             perror("Erro ao receber dados do servidor");
             close(filefd);
