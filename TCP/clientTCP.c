@@ -139,7 +139,7 @@ int main(int argc, char **argv) {
     // printf("total_bytes_received: %ld\n", total_bytes_received);
     // Calculando a taxa de download (megabytes por segundo)
     double download_rate = (total_bytes_received / (1024*1024)) / time_taken;
-    printf("\nArquivo recebido com sucesso!\n");
+    printf("\nArquivo recebido e salvo com sucesso como 'arquivo_recebidoTCP.bin'.\n");
     printf("Taxa de download: %.2f MB/s\n", download_rate);
 
     // Calculando o hash MD5 do arquivo recebido
