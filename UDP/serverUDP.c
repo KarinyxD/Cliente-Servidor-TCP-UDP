@@ -75,6 +75,13 @@ int main(int argc, char *argv[]){
         }
     }
 
+    // Envia a mensagem "EOF" para indicar o término
+    const char *eof_msg = "EOF";
+    n = sendto(sockfd, eof_msg, strlen(eof_msg), 0, (struct sockaddr *) &cli_addr, clilen);
+    if (n < 0) {
+        perror("ERROR sending EOF");
+    }
+
     if (bytes_read < 0) {
         perror("ERROR reading from file");
     }
