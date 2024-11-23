@@ -8,7 +8,7 @@
 #include <arpa/inet.h>
 #include <fcntl.h>
 #include <time.h>
-#define TIMEOUT_SEC 5 // Definindo o tempo limite de 5 segundos
+#define TIMEOUT_SEC 1 // Definindo o tempo limite de 1 segundo
 void error(const char *msg) {
     perror(msg);
     exit(1);
@@ -82,7 +82,7 @@ int main(int argc, char *argv[]) {
         FD_ZERO(&readfds);
         FD_SET(client_sock, &readfds);
 
-        // Define o tempo limite de 5 segundos
+        // Define o tempo limite de 1 segundo
         timeout.tv_sec = TIMEOUT_SEC;
         timeout.tv_usec = 0;
 
