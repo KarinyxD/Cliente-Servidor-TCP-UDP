@@ -12,6 +12,8 @@ Este projeto implementa um modelo de comunicação cliente-servidor utilizando o
 
 ## Requisitos
 - Sistema UNIX
+- Compilador C (gcc)
+- Pacote de desenvolvimento libc6-dev
 
 ## Funcionalidades
 - **TCP**: Comunicação confiável entre cliente e servidor.
