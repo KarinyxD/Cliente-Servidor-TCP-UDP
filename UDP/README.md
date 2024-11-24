@@ -20,7 +20,7 @@ Este projeto implementa um sistema de cliente-servidor UDP em C, onde o servidor
     exibe a porcentagem de perca de pacotes.
 
 ## Compilação
-Para compilar o servidor e o cliente, use o `Makefile` fornecido. Execute o seguinte comando no diretório do projeto:
+Para compilar o servidor e o cliente, use o `Makefile` fornecido. Execute o seguinte comando no diretório raiz do projeto:
 ```sh
 make
 ```
