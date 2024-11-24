@@ -18,6 +18,15 @@ Este projeto implementa um modelo de comunicação cliente-servidor utilizando o
 ## Funcionalidades
 - **TCP**: Comunicação confiável entre cliente e servidor.
 - **UDP**: Comunicação não confiável, mas rápida entre cliente e servidor.
+- **Gerador**(extra): Gera um arquivo binário de tamanho especificado pelo usuário, preenchido com dados aleatórios, e o salva no diretorio "arquivos_servidor".
+
+## Compilação no diretorio raiz
+    Compilar o projeto completo (TCP, UDP e gerador): 'make'
+    Compilar apenas os programas TCP: 'make tcp'
+    Compilar apenas os programas UDP: 'make udp'
+    Compilar o gerador de arquivos binários: 'make gerador'
+    Limpar arquivos compilados: 'make clean'
+    Limpar completamente o projeto: 'make distclean'
 
 ## Notas Finais
 Cada protocolo (TCP e UDP) possui características diferentes. O TCP garante a entrega ordenada dos pacotes, enquanto o UDP é mais rápido, mas não garante a entrega ou ordem dos pacotes. Escolha o protocolo que melhor atende às necessidades do seu projeto.
